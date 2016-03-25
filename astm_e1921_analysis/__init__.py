@@ -16,3 +16,6 @@ from .Specimen import Specimen
 from .SpecimenTest import SpecimenTest
 from .Sample import Sample
 from .SampleCollection import SampleCollection
+
+# remove helper module from namespace and retain only helper functions
+del helper
