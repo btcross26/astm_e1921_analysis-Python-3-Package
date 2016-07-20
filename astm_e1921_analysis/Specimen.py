@@ -1,9 +1,26 @@
 class Specimen(object):
     '''
-    Class describes test specimen geometry and material
+    Class describes test specimen geometry and material for SEB specimen.
     '''
     
     def __init__(self, id, W, B, BN, a0, S):
+        '''
+        Constructor Arguments
+        ---------------------
+        id: str
+            ID of specimen.
+        W: float
+            Specimen depth (length).
+        B: float
+            Specimen width at gross section (length).
+        BN: float
+            Net specimen width at side-grooves, if applicable (length).
+        a0: float
+            Initial crack length (float).
+        S: float
+            Span length of SEB specimen (float).
+            
+        '''
         self.id = id
         self.W = W
         self.B = B

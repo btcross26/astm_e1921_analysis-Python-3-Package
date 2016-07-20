@@ -5,14 +5,16 @@ import numpy as np
     
 class SampleCollection(object):
     '''
-    SampleCollection object
-    Object that contains a collection of test sample and means to plot all samples
-    on the same axes after normalizing the reference temperature to zero.
+    SampleCollection object - object that contains a collection of test
+    sample and means to plot all samples on the same axes after normalizing
+    the reference temperature to zero.
     '''
     def __init__(self, description):
         '''
-        Constructor Arguments:
-            description = string describing the sample collection
+        Constructor Arguments
+        ---------------------
+        description: str
+            Description of the sample collection.
         '''
         self.description = description
         self.samples = dict()
@@ -35,9 +37,12 @@ class SampleCollection(object):
         
     def add_samples(self, *samples):
         '''
-        Method to add Sample objects to the collection
-        Arguments:
-            *samples = a comma separated list of 1 or more sample objects
+        Method to add Sample objects to the collection.
+        
+        Arguments
+        ---------
+        *samples: Sample
+            One or more sample objects.
         '''
         for sample in samples:
             assert isinstance(sample, Sample), "<arg>:*samples must be of type Sample"
@@ -46,9 +51,13 @@ class SampleCollection(object):
         
     def remove_samples(self, *sample_descriptions):
         '''
-        Method to remove Sample objects from the collection based on sample description strings
-        Arguments:
-            *sample_description = a comma separated list of 1 or more sample description strings
+        Method to remove Sample objects from the collection based on sample
+        description strings.
+        
+        Arguments
+        ---------
+        *sample_description: str
+            One or more sample description strings.
         '''
         for sample_description in sample_descriptions:
             if sample_description in self.samples:
@@ -58,12 +67,15 @@ class SampleCollection(object):
         
     def plot_data(self, alpha = 0.05, grid = True, legend = True, show = True, english_units = False, ignore_censored = False):
         '''
-        Method to plot all samples in the collection against normalized temperature.  Note that
-        all samples will be plotted with the same marker and no legend will be included on the plot,
-        although each line object is labeled with the sample description such that a legend can
+        Method to plot all samples in the collection against normalized
+        temperature.  Note that all samples will be plotted with the same
+        marker and no legend will be included on the plot, although each line
+        object is labeled with the sample description such that a legend can
         be added accordingly.
-        Returns:
-            A tuple of figure, axes for the given plot
+        
+        Returns
+        -------
+        A tuple of figure, axes for the given plot.
         '''
         assert alpha is None or (alpha < 1.0 and alpha > 0.0), "Invalid alpha specification"
         assert len(self) > 0, "SampleCollection is empty"

@@ -11,15 +11,43 @@ from scipy.optimize import minimize
     
 class Sample(object):
     '''
-    Sample object - combines a series of Specimen object/test data/temperature combinations
-    and provides analysis tools to calculate Master curve reference temperature via the
-    standard ASTM E1921 methods as well as methods as provided in the inhomogeneous steel
-    paper by Kim Wallin titled "Master Curve analysis of inhomogeneous ferritic steels" (2003)
+    Sample object - combines a series of Specimen object/test data/
+    temperature combinations and provides analysis tools to calculate Master
+    curve reference temperature via the standard ASTM E1921 methods as well
+    as methods as provided in the inhomogeneous steel paper by Kim Wallin
+    titled "Master Curve analysis of inhomogeneous ferritic steels" (2003).
     '''
     
     class SampleResults(object):
         def __init__(self, num_valid = None, rmat = None, T0Q = None, sigma_T0Q = None, \
                      req = None, KJc_median = None, K0 = None, sigma = None, tol = None):
+        '''
+        Constructor Arguments
+        ---------------------        
+        num_valid: int
+            Number of valid SpecimenTest objects in the sample.            
+        rmat: numpy.matrix 
+            Matrix with columns temperature, KJc, and valid (1 if valid, 0 if
+            not valid). Non-tests should not be added to the sample to begin
+            with and should be screened prior to buiding the Sample object.            
+        T0Q: float
+            Reference temperature as per ASTM E1921 calculations.            
+        sigma_T0Q: float
+            Reference temperature standard deviation as per ASTM E1921
+            calculations.            
+        req: float
+            Calculation for valid sample as per ASTM E1921 calculations --
+            a value greater than or equal to 1.0 equates to a valid sample.            
+        KJc_median: callable
+            Function of T that calculates median KJc value based on reference
+            temperature.            
+        sigma: callable
+            Function of T that calculates standard deviation.            
+        tol: callable
+            Function of T, alpha that calculates predication interval line at
+            T for given alpha, e.g. 97.5 percentile prediction interval
+            percentile at -70 celsius.
+        '''
             self.num_valid = num_valid
             self.rmat = rmat
             self.T0Q = T0Q
@@ -28,14 +56,16 @@ class Sample(object):
             self.KJc_median = KJc_median
             self.K0 = K0
             self.sigma = sigma
-            self.tol = tol   
+            self.tol = tol 
     
     def __init__(self, description, material):
         '''
-        Constructor arguments:
-            description: string giving the sample description, e.g. "Steel Heat #1 LT Orientation"
-            
-            material: Material object specifying test material of the specimens
+        Constructor arguments
+        ---------------------
+        description: str
+            Sample description, e.g. "Steel Heat #1 LT Orientation".           
+        material: Material
+            Object specifying test material of the specimens.
         '''
         self.description = description
         self.material = material
@@ -63,45 +93,54 @@ class Sample(object):
             
     def specimen_id_list(self):
         '''
-        Returns:
-            A list of specimen ids currently contained in the sample
+        Returns
+        -------
+        A list of specimen ids currently contained in the sample.
         '''
         return [key for key in self.tests.keys()]
         
     def add_test(self, specimen, temperature, data, elastic_ul):
         '''
-        Adds a SpecimenTest object to the sample
+        Adds a SpecimenTest object to the sample.
         
-        Arguments:
-            specimen: a Specimen object
-            
-            temperature: the temperature at which the test was conducted (float)
-            
-            data: test data dictionary in the format required by the SpecimenTest object
-            
-            elastic_ul: upper load limit in N to be used in calculating initial elastic slope
+        Arguments
+        ---------
+        specimen: Specimen
+            A Specimen object.           
+        temperature: float
+            The temperature at which the test was conducted.       
+        data: dict
+            Test data dictionary in the format required by the SpecimenTest
+            object.    
+        elastic_ul: float
+            Upper load limit in N to be used in calculating initial elastic
+            slope.
         '''
         self.tests[specimen.id] = SpecimenTest(specimen, self.material, temperature, \
                                                data = data, elastic_ul = elastic_ul)
         
     def remove_test(self, specimen_id):
         '''
-        Remove a SpecimenTest object from the sample by specimen id.  If specimen id
-        is not in the sample, nothing happens.
+        Remove a SpecimenTest object from the sample by specimen id.  If
+        specimen id is not in the sample, nothing happens.
         
-        Arguments:
-            specimen_id: string specifying specimen id, e.g. "2LS-2"
+        Arguments
+        ---------
+        specimen_id: str
+            Specimen id, e.g. "2LS-2".
         '''
         if specimen_id in self.tests:
             del self.tests[specimen_id]
             
     def change_material(self, material = None):
         '''
-        Changes material object of all specimens in sample.  Analysis must be rerun manually
-        recalculate the master curve.
+        Changes material object of all specimens in sample.  Analysis must be
+        re-run manually recalculate the master curve.
         
-        Arguments:
-            material: new material object
+        Arguments
+        ---------
+        material: Material
+            New material object.
         '''
         if isinstance(material, Material):
             self.material = material
@@ -110,29 +149,8 @@ class Sample(object):
 
     def analyze(self, ignore_censored = False):
         '''
-        Runs standard Master Curve analysis as specified in ASTM E1921.  Calculated results
-        are stored in a named tuple member under the tag "results".  The tags of the named tuple
-        are as follows:
-        
-            num_valid: number of valid SpecimenTest objects in the sample
-            
-            rmat: numpy matrix with columns temperature, KJc, and valid (1 if valid, 0 if not valid).
-            Non-tests should not be added to the sample to begin with and should be screened
-            prior to buiding the Sample object.
-            
-            T0Q: reference temperature as per ASTM E1921 calculations
-            
-            sigma_T0Q: reference temperature standard deviation as per ASTM E1921 calculations
-            
-            req: calculation for valid sample as per ASTM E1921 calculations -- a value greater than
-            or equal to 1.0 equates to a valid sample
-            
-            KJc_median: function of T that calculates median KJc value based on reference temperature
-            
-            sigma: function of T that calculates standard deviation
-            
-            tol: function of T, alpha that calculates predication interval line at T for given alpha,
-            e.g. 97.5 percentile prediction interval percentile at -70 celsius
+        Runs standard Master Curve analysis as specified in ASTM E1921.
+        Calculated results are stored in instance 'results' object.
         '''
         self.results = Sample.SampleResults()
         results = np.zeros((len(self.tests), 3))
@@ -160,8 +178,8 @@ class Sample(object):
         
     def _create_ofunc(self, results):
         '''
-        Helper function that returns objective function to be solved for as per ASTM E1921
-        calculations.  Not meant to be called externally.
+        Helper function that returns objective function to be solved for as
+        per ASTM E1921 calculations.  Not meant to be called externally.
         '''
         temp, KJc, delta = results[:,0], results[:,1], results[:,2]
         def ofunc(T0):
@@ -174,9 +192,9 @@ class Sample(object):
         
     def _T0_sd(self, results, T0):
         '''
-        Helper function that calculates reference temperature standard deviation as per
-        ASTM E1921 calculations.  sigma_exp is assumed 4.0 as recommended in the specification.
-        Not meant to be called externally.
+        Helper function that calculates reference temperature standard
+        deviation as per ASTM E1921 calculations. sigma_exp is assumed 4.0 as
+        recommended in the specification. Not meant to be called externally.
         '''
         KJc_median_eq = np.mean((30.0 + 70.0 + np.exp(0.019 * (results[:,0] - T0)))[results[:,2] == 1])
         if KJc_median_eq >= 83:
@@ -191,25 +209,34 @@ class Sample(object):
                 
     def MML_estimation(self, optimize_kwargs = None, ignore_censored = False):
         '''
-        MML estimation as per paper by Kim Wallin through discussions with Scibetta.
+        MML estimation as per paper by Kim Wallin through discussions with
+        Scibetta.
         
-        Arguments:
-            optimize_kwargs: dictionary keyword arguments to pass on to scipy.optimize.minimize.  Default
-            values are method = "L-BFGS-B" and selected values of x0 and bounds that are based on
-            computed results.  If the default variables are included in optimize_kwargs, they will
-            be overridden.  The dictionary is passed to the optimization routine in kwargs format,
-            aka **kwargs.
+        Arguments
+        ---------
+        optimize_kwargs: dict
+            Keyword arguments to pass on to scipy.optimize.minimize.  Default
+            values are method = "L-BFGS-B" and selected values of x0 and
+            bounds that are based on computed results.  If the default
+            variables are included in optimize_kwargs, they will be
+            overridden.  The dictionary is passed to the optimization routine
+            in kwargs format, aka **kwargs.
+        ignore_censored: bool
+            If True, censored values are ignored.
             
-        Returns:
-            A dictionary containing various values of the analysis.  The "x" entry
-            contains an ndarray in which the first entry is the estimated mean of
-            the reference temperature and the second entry is the estimated standard
-            deviation of the reference temperature.  Note that this is different from the
-            standard ASTM E1921 analysis in that the mean and standard deviation are
-            assumed to be a part of the generative process for the fracture toughness
-            of an individual specimen drawn from the material.  The mean temperature in this
-            case is indicative of the overall average toughness of a material, and the standard
-            deviation is indicative of the inhomogeneity of the material.
+        Returns
+        -------
+        A dictionary containing various values of the analysis.  The "x"
+        entry contains an ndarray in which the first entry is the estimated
+        mean of the reference temperature and the second entry is the
+        estimated standard deviation of the reference temperature.  Note that
+        this is different from the standard ASTM E1921 analysis in that the
+        mean and standard deviation are assumed to be a part of the
+        generative process for the fracture toughness of an individual
+        specimen drawn from the material.  The mean temperature in this case
+        is indicative of the overall average toughness of a material, and the
+        standard deviation is indicative of the inhomogeneity of the
+        material.
         '''
         # run analysis of sample to insure self.results.rmat has been computed
         self.analyze(ignore_censored)
@@ -268,17 +295,21 @@ class Sample(object):
         '''
         Plot the sample data based on standard ASTM E1921 analysis
         
-        Arguments:
-            alpha: prediction interval two-tailed tolerance bounds to be shown on the plot.
-            Value should be in the interval (0, 1).  If None, then tolerance bounds will not be plotted.
-            
-            grid: if True, a grid will be shown on the plot.
-            
-            legend: if True, a legend will be shown on the plot
-            
-            show: if True, the plot will be shown on the current plotting device
-            
-            english_units: if True, the plot will be shown in English units.  Default is SI units.
+        Arguments
+        ---------
+        alpha: float
+            Prediction interval two-tailed tolerance bounds to be shown on
+            the plot. Value should be in the interval (0, 1).  If None, then
+            tolerance bounds will not be plotted.            
+        grid: bool
+            If True, a grid will be shown on the plot.            
+        legend: bool
+            If True, a legend will be shown on the plot.      
+        show: bool
+            If True, the plot will be shown on the current plotting device.        
+        english_units: bool
+            If True, the plot will be shown in English units.  Default is SI
+            units.
         '''
         assert alpha is None or (alpha < 1.0 and alpha > 0.0), "Invalid alpha specification"
         if self.results is None:

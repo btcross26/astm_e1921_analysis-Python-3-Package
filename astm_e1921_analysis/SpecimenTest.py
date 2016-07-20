@@ -4,23 +4,42 @@ import numpy as np
    
 class SpecimenTest(object):
     '''
-    SpecimenTest object - combines a specimen with a material and test data
+    SpecimenTest object - combines a specimen with a material and test data.
     '''
     
     class TestResults(object):
         def __init__(self, Jc = None, KJc = None, KJc_valid_1T = None):
+            '''
+            Constructor Arguments
+            ---------------------
+            Jc: float
+                Jc value in MPa-mm.
+            KJc: float
+                KJc value in MPa-mm.
+            KJc_valid_1T: float
+                Maximum valid KJc value based on size constraints in MPa-mm.
+            
+            '''
             self.Jc = Jc
             self.KJc = KJc
             self.KJc_valid_1T = KJc_valid_1T
                     
     def __init__(self, specimen, material, temperature, data, elastic_ul):
         '''
-        Constructor arguments:
-            specimen: Specimen object
-            material: Material object
-            temperature: temperature of test run
-            data: dictionary with keys "cod", "disp", and "force" containing equal length numpy float arrays
-            elastic_ul: upper limit of elastic behavior in force units to determine C0 for analysis
+        Constructor Arguments
+        ---------------------
+        specimen: Specimen
+            Specimen object.
+        material: Material
+            Material object.
+        temperature: float
+            Temperature of test run (C).
+        data: dict
+            Dict with keys "cod", "disp", and "force" containing equal length
+            numpy float arrays.
+        elastic_ul: float
+            Upper limit of elastic behavior in force units to determine C0
+            for analysis.
         '''
         self.specimen = specimen
         self.material = material
@@ -39,7 +58,7 @@ class SpecimenTest(object):
                
     def _analyze(self):
         '''
-        KJc calculations on test data
+        KJc calculations on test data.
         '''
         # create and initialize test variables for cleaner code (convert lengths to m)
         P = np.array(self.data["force"])
@@ -87,14 +106,20 @@ class SpecimenTest(object):
 
     def update(self, specimen = None, material = None, data = None, elastic_ul = None):
         '''
-        Update test results based on a change in Specimen Test parameters.  Arguments
-        set to equal None will remain unchanged in the updated results analysis.
+        Update test results based on a change in Specimen Test parameters.
+        Arguments set to equal None will remain unchanged in the updated
+        results analysis.
         
-        Arguments:
-            specimen: new test specimen object
-            material: new material object
-            data: new data
-            elastic_ul: process data using new elastic_ul for determining initial slope
+        Arguments
+        ---------
+        specimen: Specimen
+            New test specimen object.
+        material: Material
+            New material object
+        data: dict
+            New data as described in documentation of instance constructor.
+        elastic_ul: float
+            Process data using new elastic_ul for determining initial slope.
         '''
         if isinstance(specimen, Specimen):
             self.specimen = specimen
@@ -109,15 +134,21 @@ class SpecimenTest(object):
         
     def plot_data(self, grid = True, show = True, english_units = False):
         '''
-        Plot specimen test data
+        Plot specimen test data.
         
-        Arguments:
-            grid: include xy grid on plot
-            show: show plot in window
-            english_units: plot in English units in. and lbf (default is SI -- mm and N)
+        Arguments
+        ---------
+        grid: bool
+            If True, include xy grid on plot.
+        show: bool
+            If True, show plot in window.
+        english_units: bool
+            If True, plot in English units in. and lbf (default is SI -- mm
+            and N).
             
-        Returns:
-            A tuple containing the plot figure object and the plot axes object
+        Returns
+        -------
+        A tuple containing the plot figure object and the plot axes object.
         '''
         if english_units == True:
             funits, lunits = "lbf", "in."

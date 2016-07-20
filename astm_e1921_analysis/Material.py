@@ -1,21 +1,22 @@
 class Material(object):
     '''
-    Class describes steel material properties
+    Class describes steel material properties.
     '''
     
     def __init__(self, description, fu, fy, E, poisson_ratio = 0.3):
         '''
-        Constructor Arguments:
-        
-            description: string describing steel material
-            
-            fu: ultimate strength of steel (MPa)
-            
-            fy: static yield strength of steel (MPa
-            
-            E: elastic modulus of steel (Mpa)
-            
-            poisson_ratio: Poisson's ratio of steel material
+        Constructor Arguments
+        ---------------------
+        description: str
+            Description of steel material.            
+        fu: float
+            Ultimate strength of steel (MPa).            
+        fy: float
+            Static yield strength of steel (MPa).          
+        E: float
+            Elastic modulus of steel (Mpa).           
+        poisson_ratio: float
+            Poisson's ratio of steel material.
         '''
         self.description = description
         self.fu = fu
